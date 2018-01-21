@@ -1,0 +1,22 @@
+---
+- name: test script module
+  hosts: windows
+  tasks:
+    - name: test stat module on file
+      win_stat: path="C:/Windows/win.ini"
+      register: stat_file
+    #- name: net-framework-35
+     # win_feature:
+      #name: NET-Framework-Core
+      #state: present
+    - name: Install the Visual C thingy
+      win_package:
+      path: https://download.microsoft.com/download/A/F/0/AF0071F3-B198-4A35-AA90-C68D103BDCCF/rdcman.msi
+      arguments: /install /passive /norestart
+    - name: Install application and override expected return codes
+      win_package:
+      path: https://download.microsoft.com/download/1/6/7/167F0D79-9317-48AE-AEDB-17120579F8E2/NDP451-KB2858728-x86-x64-AllOS-ENU.exe
+      product_id: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
+      arguments: '/q /norestart'
+      state: present
+      expected_return_code: [0, 666, 3010]

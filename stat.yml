@@ -1,0 +1,126 @@
+- name: test stat module
+  hosts: windows
+  tasks:
+   # - name: test stat module on file
+      #win_stat: path="C:/Windows/win.ini"
+     # register: stat_file
+
+   # - debug: var=stat_file
+
+   # - name: check stat_file result
+     # assert:
+       #   that:
+            # - "stat_file.stat.exists"
+           #  - "not stat_file.stat.isdir"
+           #  - "stat_file.stat.size > 0"
+           #  - "stat_file.stat.md5"
+    #
+    #- name: Install IIS (Web-Server only)
+     # win_feature:
+      #name: Web-Server
+      #state: present
+    #- name: Install IIS (Web-Server only)
+      #win_feature:
+      #  name: Web-Server
+      #  state: present
+
+    #- name: Install IIS (Web-Server and Web-Common-Http)
+      #win_feature:
+        #name: Web-Server,Web-Common-Http
+       # state: present
+
+    #- name: Install NET-Framework-Core from file
+      #win_feature:
+        #name: NET-Framework-Core
+        #source: C:\Temp\iso\sources\sxs
+        #state: present
+
+    #- name: Install IIS Web-Server with sub features and management tools
+     # win_feature:
+       # name: Web-Server
+        #state: present
+        #restart: True
+        #include_sub_features: True
+        #include_management_tools: True
+    - name: Acme IIS site
+      win_iis_website:
+        name: "Acme"
+        state: started
+        port: 80
+        ip: 127.0.0.1
+        hostname: acme.local
+        application_pool: "acme"
+        physical_path: c:\sites\acme
+        parameters: logfile.directory:c:\sites\logs
+        register: website
+
+# Remove Default Web Site and the standard port 80 binding
+    - name: Remove Default Web Site
+      win_iis_website:
+        name: "Default Web Site"
+        state: absent
+    - name: return information about an existing application pool
+      win_iis_webapppool:
+        name: DefaultAppPool
+        state: present
+
+    - name: create a new application pool in 'Started' state
+      win_iis_webapppool:
+        name: AppPool
+        state: started
+
+    - name: stop an application pool
+      win_iis_webapppool:
+        name: AppPool
+        state: stopped
+
+    #- name: restart an application pool (non-idempotent)
+      #win_iis_webapppool:
+        #name: AppPool
+        #state: restart
+
+    - name: change application pool attributes using new dict style
+      win_iis_webapppool:
+        name: AppPool
+        attributes:
+        managedRuntimeVersion: v4.0
+        autoStart: false
+
+# Note this format style has been deprecated, please use the newer dict style instead
+    - name: change application pool attributes using older string style
+      win_iis_webapppool:
+        name: AppPool
+        attributes: 'managedRuntimeVersion:v4.0|autoStart:false'
+
+# This is the preferred style to use when setting attributes
+    - name: creates an application pool, sets attributes and starts it
+      win_iis_webapppool:
+        name: AnotherAppPool
+        state: started
+        attributes:
+        managedRuntimeVersion: v4.0
+        autoStart: false
+
+# In the below example we are setting attributes in child element processModel
+# https://www.iis.net/configreference/system.applicationhost/applicationpools/add/processmodel
+    - name: manage child element and set identity of application pool
+      win_iis_webapppool:
+        name: IdentitiyAppPool
+        state: started
+        attributes:
+        managedPipelineMode: Classic
+        processModel.identityType: SpecificUser
+        processModel.username: '{{ansible_user}}'
+        processModel.password: '{{ansible_password}}'
+        processModel.loadUserProfile: True
+
+    - name: manage a timespan attribute
+      win_iis_webapppool:
+        name: TimespanAppPool
+        state: started
+        attributes:
+      # Timespan with full string "day:hour:minute:second.millisecond"
+        recycling.periodicRestart.time: "00:00:05:00.000000"
+        recycling.periodicRestart.schedule: ["00:10:00", "05:30:00"]
+      # Shortened timespan "hour:minute:second"
+        processModel.pingResponseTime: "00:03:00"

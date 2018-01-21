@@ -1,0 +1,8 @@
+---
+- hosts: windows
+  vars:
+    db_user: my-api
+    db_pass: my-pass
+  roles:
+    - common
+    - dbserver
